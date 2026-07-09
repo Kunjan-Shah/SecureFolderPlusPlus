@@ -1,0 +1,120 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.securefolder.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.securefolder.app"
+        // API 26 (Android 8.0): minimum for all DPM APIs we use.
+        // Managed profiles, setPermittedAccessibilityServices, setPermittedInputMethods
+        // all require API 21+, but FLAG_SECURE enforcement is cleanest from 26+.
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        // IMPORTANT: Use a dedicated signing key for production.
+        // Never ship with a debug keystore. The cert fingerprint of this
+        // app must be registered in SecurityConstants.SFPP_CERT_SHA256.
+        release {
+            // storeFile file('../keystore/sfpp.keystore')
+            // storePassword System.getenv('KEYSTORE_PASS')
+            // keyAlias 'sfpp'
+            // keyPassword System.getenv('KEY_PASS')
+        }
+    }
+
+    buildTypes {
+        debug {
+            // Disable debug builds for security-sensitive apps.
+            // Debug builds allow ADB attach and are not suitable for a secure container.
+            debuggable false
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
+                    'proguard-rules.pro'
+        }
+        release {
+            debuggable false
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
+                    'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    buildFeatures {
+        viewBinding true
+        buildConfig true
+    }
+
+    // Prevent inclusion of debug metadata that could leak internals
+    packaging {
+        resources {
+            excludes += [
+                    '/META-INF/{AL2.0,LGPL2.1}',
+                    '/META-INF/DEPENDENCIES',
+                    '/META-INF/*.kotlin_module'
+            ]
+        }
+    }
+}
+
+dependencies {
+    // ── AndroidX Core ────────────────────────────────────────────────────────
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.activity:activity-ktx:1.8.2'
+    implementation 'androidx.fragment:fragment-ktx:1.6.2'
+
+    // ── Material Design ───────────────────────────────────────────────────────
+    implementation 'com.google.android.material:material:1.11.0'
+
+    // ── Layout ────────────────────────────────────────────────────────────────
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+
+    // ── Biometric auth gate ───────────────────────────────────────────────────
+    implementation 'androidx.biometric:biometric:1.1.0'
+
+    // ── Lifecycle / ViewModel ─────────────────────────────────────────────────
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
+    implementation 'androidx.lifecycle:lifecycle-service:2.7.0'
+    implementation 'androidx.lifecycle:lifecycle-process:2.7.0'
+
+    // ── WorkManager (for deferred policy refresh tasks) ───────────────────────
+    implementation 'androidx.work:work-runtime-ktx:2.9.0'
+
+    // ── Coroutines ────────────────────────────────────────────────────────────
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'
+
+    // ── Encrypted SharedPreferences (for secure config storage) ───────────────
+    // Uses AES-256-GCM + AES-256-SIV backed by Android Keystore.
+    implementation 'androidx.security:security-crypto:1.1.0-alpha06'
+
+    // ── Logging (stripped in release via ProGuard) ─────────────────────────────
+    implementation 'com.jakewharton.timber:timber:5.0.1'
+
+    // ── Testing ───────────────────────────────────────────────────────────────
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.mockito.kotlin:mockito-kotlin:5.2.1'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}

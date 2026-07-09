@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    secure_keyboard_method.xml
+    ═══════════════════════════════════════════════════════════════
+    Configuration for the Secure Folder++ isolated keyboard IME.
+    Referenced by SecureKeyboardService via android.view.im metadata.
+
+    This IME is the ONLY keyboard we trust inside the banking profile.
+    It is rendered by our own trusted service process, not by any
+    third-party application, and never exports keystrokes outside
+    the session context.
+
+    settingsActivity is deliberately left empty — we do not want
+    users (or attackers) to access IME settings inside the profile.
+    ═══════════════════════════════════════════════════════════════
+-->
+<input-method
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:settingsActivity="">
+
+    <!--
+        Default subtype: English (US) keyboard.
+        If your banking app requires other locales, add additional
+        subtypes here. Limit to only what is necessary.
+    -->
+    <subtype
+        android:label="@string/subtype_label_en_us"
+        android:imeSubtypeLocale="en_US"
+        android:imeSubtypeMode="keyboard"
+        android:isDefault="true"/>
+
+    <!--
+        Numeric subtype: for OTP / PIN fields.
+        SecureKeyboardService switches to this subtype when it detects
+        that the focused field has inputType = numberPassword or number.
+    -->
+    <subtype
+        android:label="@string/subtype_label_numeric"
+        android:imeSubtypeLocale=""
+        android:imeSubtypeMode="keyboard"
+        android:isDefault="false"
+        android:imeSubtypeExtraValue="EmojiCapable=false"/>
+
+</input-method>

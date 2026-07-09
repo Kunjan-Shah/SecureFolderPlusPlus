@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+    ═══════════════════════════════════════════════════════════════
+     SECURE FOLDER++ — AndroidManifest.xml
+    ═══════════════════════════════════════════════════════════════
+     This app acts as a Device Policy Controller (Profile Owner).
+     It creates an isolated managed Work Profile containing ONLY
+     the target banking app, then enforces all security policies
+     through the Android DevicePolicyManager API.
+    ═══════════════════════════════════════════════════════════════
+    -->
+
+    <!-- ── Boot: restore monitoring after reboot ─────────────────────────── -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+
+    <!-- ── Foreground service: continuous security monitoring ─────────────── -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+    <!--
+        FOREGROUND_SERVICE_SPECIAL_USE requires a Play Store justification.
+        Declare the subtype in the service element's <property> tag below.
+    -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+
+    <!-- ── Package inspection for health checks ──────────────────────────── -->
+    <!--
+        We need QUERY_ALL_PACKAGES to inspect installed apps for:
+          - Known remote control apps (TeamViewer, AnyDesk, etc.)
+          - Overlay-capable packages currently active
+          - Suspicious accessibility services
+        Justification required in Play Console if publishing there.
+    -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission"/>
+
+    <!-- ── Biometric authentication gate ─────────────────────────────────── -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+    <!-- Kept for older device compat (API < 28) -->
+    <uses-permission
+        android:name="android.permission.USE_FINGERPRINT"
+        android:maxSdkVersion="27"/>
+
+    <!-- ── Network state: for certificate validation in integrity checks ──── -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
+    <!-- ── Notification: post our own monitor foreground notification ─────── -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
+    <!-- ── Input method: required for the Secure Keyboard service ─────────── -->
+    <!--
+        Note: This permission is not user-requested. It must be declared
+        because SecureKeyboardService extends InputMethodService.
+    -->
+    <uses-permission android:name="android.permission.BIND_INPUT_METHOD"/>
+
+    <!-- ── USB: detect active ADB connections during health check ─────────── -->
+    <uses-permission android:name="android.permission.ACCESS_USB_ACCESSORY"/>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <application
+        android:name=".SecureFolderApp"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.SecureFolder"
+        android:networkSecurityConfig="@xml/network_security_config"
+        tools:targetApi="31">
+
+        <!--
+        ── Main launcher activity ────────────────────────────────────────────
+           excludeFromRecents: prevents the banking session from appearing
+           in Android's task switcher thumbnail (belt-and-suspenders on top
+           of FLAG_SECURE).
+        -->
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true"
+            android:screenOrientation="portrait"
+            android:excludeFromRecents="true"
+            android:windowSoftInputMode="adjustResize|stateHidden"
+            android:configChanges="orientation|screenSize|keyboardHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+        <!--
+        ── Profile Owner / Device Policy Controller Receiver ─────────────────
+           This is the heart of the DPC. It must:
+             1. Have BIND_DEVICE_ADMIN permission (protects it from spoofing)
+             2. Declare android.app.device_admin metadata pointing to our policy XML
+             3. Listen for PROFILE_PROVISIONING_COMPLETE to apply initial policies
+             4. Listen for MANAGED_PROFILE_PROVISIONED in the work profile context
+
+           The receiver is exported=true because the Android system must be
+           able to send it intents during provisioning and admin events.
+        -->
+        <receiver
+            android:name=".dpc.SecureFolderAdminReceiver"
+            android:exported="true"
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data
+                android:name="android.app.device_admin"
+                android:resource="@xml/device_admin_policies"/>
+            <intent-filter>
+                <!-- Required: marks this as a Device Admin -->
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED"/>
+                <!-- Fired in the primary profile when work profile provisioning completes -->
+                <action android:name="android.app.action.PROFILE_PROVISIONING_COMPLETE"/>
+                <!-- Fired inside the work profile itself after it is created -->
+                <action android:name="android.app.action.MANAGED_PROFILE_PROVISIONED"/>
+            </intent-filter>
+        </receiver>
+
+        <!--
+        ── Secure Keyboard IME ───────────────────────────────────────────────
+           Our own trusted InputMethodService. By using setPermittedInputMethods()
+           via DPM, we can restrict the work profile to ONLY this keyboard plus
+           selected system keyboards (Google/Samsung).
+
+           This service never sends keystrokes outside the process. Clipboard
+           access is blocked within it (Step 6).
+        -->
+        <service
+            android:name=".keyboard.SecureKeyboardService"
+            android:exported="true"
+            android:label="@string/secure_keyboard_label"
+            android:permission="android.permission.BIND_INPUT_METHOD">
+            <intent-filter>
+                <action android:name="android.view.InputMethod"/>
+            </intent-filter>
+            <meta-data
+                android:name="android.view.im"
+                android:resource="@xml/secure_keyboard_method"/>
+        </service>
+
+        <!--
+        ── Runtime Security Monitor Service ─────────────────────────────────
+           A foreground service that runs during the secure session.
+           It continuously checks:
+             - Active screen recording (MediaProjection)
+             - Overlay-capable apps becoming foreground
+             - Accessibility service changes
+             - Keyboard changes
+
+           It kills the session and locks the profile on any violation.
+
+           foregroundServiceType="specialUse" requires Play Console justification.
+        -->
+        <service
+            android:name=".security.SecureMonitorService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Continuous security monitoring for banking session isolation"/>
+        </service>
+
+        <!--
+        ── Boot Receiver ─────────────────────────────────────────────────────
+           Restores monitoring state and re-applies policies after device reboot.
+           Uses LOCKED_BOOT_COMPLETED to act even before credential-encrypted
+           storage is unlocked (Direct Boot aware path).
+        -->
+        <receiver
+            android:name=".dpc.BootReceiver"
+            android:exported="false"
+            android:directBootAware="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED"/>
+            </intent-filter>
+        </receiver>
+
+    </application>
+
+</manifest>

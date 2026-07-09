@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Secure Folder++</string>
+    <string name="secure_keyboard_label">Secure Keyboard</string>
+    <string name="subtype_label_en_us">English (US)</string>
+    <string name="subtype_label_numeric">Numeric</string>
+</resources>

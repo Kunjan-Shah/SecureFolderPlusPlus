@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Secure Folder++ is not set up yet."
+        android:textSize="16sp"
+        android:gravity="center"
+        android:paddingTop="32dp"
+        android:paddingBottom="24dp"/>
+
+    <!-- Shown before provisioning -->
+    <Button
+        android:id="@+id/btnSetup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Set Up Secure Folder++"
+        android:textAllCaps="false"
+        android:visibility="gone"/>
+
+    <!-- Shown after provisioning -->
+    <Button
+        android:id="@+id/btnHealthCheck"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Run Security Check"
+        android:textAllCaps="false"
+        android:visibility="gone"/>
+
+    <Button
+        android:id="@+id/btnLaunch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Open Banking App"
+        android:textAllCaps="false"
+        android:layout_marginTop="12dp"
+        android:visibility="gone"/>
+
+    <Button
+        android:id="@+id/btnInstallBanking"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Pick Banking App APK to Install"
+        android:textAllCaps="false"
+        android:layout_marginTop="12dp"
+        android:visibility="gone"/>
+
+    <TextView
+        android:id="@+id/tvError"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#D32F2F"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:layout_marginTop="16dp"
+        android:visibility="gone"/>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="16dp">
+
+        <TextView
+            android:id="@+id/tvHealthResults"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:fontFamily="monospace"
+            android:visibility="gone"/>
+
+    </ScrollView>
+
+</LinearLayout>

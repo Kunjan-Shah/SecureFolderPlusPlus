@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    device_admin_policies.xml
+    ═══════════════════════════════════════════════════════════════
+    Declares which Device Admin policies Secure Folder++ will use.
+    Referenced by SecureFolderAdminReceiver via android.app.device_admin
+    metadata. The system presents this list to the user during the
+    device admin activation flow.
+
+    We declare EVERY policy we ever intend to use here.
+    Attempting to use an undeclared policy at runtime will throw
+    a SecurityException.
+    ═══════════════════════════════════════════════════════════════
+-->
+<device-admin xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-policies>
+
+        <!--
+            LIMIT-PASSWORD
+            Enforce minimum password quality on the work profile lock screen.
+            We require at minimum NUMERIC_COMPLEX or BIOMETRIC_WEAK.
+        -->
+        <limit-password/>
+
+        <!--
+            WATCH-LOGIN
+            Receive notification of failed unlock attempts inside the
+            managed profile. Used to auto-wipe after N failures.
+        -->
+        <watch-login/>
+
+        <!--
+            RESET-PASSWORD
+            Ability to set/reset the work profile challenge credential.
+            Used during initial setup to enforce a strong PIN.
+        -->
+        <reset-password/>
+
+        <!--
+            FORCE-LOCK
+            Programmatically lock the work profile immediately.
+            Called when a security violation is detected during session.
+        -->
+        <force-lock/>
+
+        <!--
+            WIPE-DATA
+            Wipe the managed profile entirely in extreme security events
+            (e.g. rooted device detected, repeated auth failures).
+            This only wipes the work profile, NOT the personal profile.
+        -->
+        <wipe-data/>
+
+        <!--
+            EXPIRE-PASSWORD
+            Set maximum credential age for the work profile challenge.
+        -->
+        <expire-password/>
+
+        <!--
+            ENCRYPTED-STORAGE
+            Require that the work profile storage is encrypted.
+            Android enforces this by default from API 24+, but declaring
+            it here makes our intent explicit.
+        -->
+        <encrypted-storage/>
+
+        <!--
+            DISABLE-CAMERA
+            We disable camera access within the work profile entirely.
+            The banking app has no legitimate need for camera in our scenario.
+            If your banking app uses camera (e.g. cheque scanning), remove this.
+        -->
+        <disable-camera/>
+
+        <!--
+            DISABLE-KEYGUARD-FEATURES
+            Lets us selectively disable keyguard features for the work profile,
+            for example disabling trust agents and disabling unredacted
+            notification content on the lock screen.
+        -->
+        <disable-keyguard-features/>
+
+    </uses-policies>
+</device-admin>
