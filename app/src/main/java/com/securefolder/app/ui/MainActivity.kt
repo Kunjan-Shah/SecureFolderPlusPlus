@@ -17,6 +17,7 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.securefolderplusplus.app.R
+import com.securefolderplusplus.app.SecurityConstants
 import com.securefolderplusplus.app.model.PolicyResult
 import com.securefolderplusplus.app.profile.ProfileManager
 import com.securefolderplusplus.app.security.BankingAppInstaller
@@ -100,13 +101,34 @@ class MainActivity : AppCompatActivity() {
         btnLaunch.visibility         = View.GONE
         btnOpenWorkProfile.visibility = View.GONE
 
-        tvStatus.text = "🔧 Work Profile — Secure Folder++ Installer\n\n" +
-                "This is the work profile instance of the app.\n" +
-                "Use this to install the banking app into the secure profile."
-
         btnInstallBanking.visibility = View.VISIBLE
         btnInstallBanking.text = "Pick Banking App APK to Install"
         btnInstallBanking.setOnClickListener { pickApkFile() }
+
+        refreshWorkProfileStatus()
+    }
+
+    /** Shows the live status of the silent auto-install triggered by onEnabled(). */
+    private fun refreshWorkProfileStatus() {
+        val prefs = getSharedPreferences(SecurityConstants.PREF_NAME, Context.MODE_PRIVATE)
+        val status = prefs.getString(SecurityConstants.PREF_BANKING_INSTALL_STATUS, null)
+        val message = prefs.getString(SecurityConstants.PREF_BANKING_INSTALL_MESSAGE, null)
+
+        val autoInstallLine = when (status) {
+            SecurityConstants.BANKING_INSTALL_STATUS_INSTALLING ->
+                "⏳ Auto-installing banking app in the background — large APKs can take a few minutes."
+            SecurityConstants.BANKING_INSTALL_STATUS_SUCCESS ->
+                "✅ Banking app auto-installed and certificate verified."
+            SecurityConstants.BANKING_INSTALL_STATUS_CERT_MISMATCH ->
+                "⚠️ Banking app installed but FAILED certificate verification — do not use it."
+            SecurityConstants.BANKING_INSTALL_STATUS_FAILED ->
+                "❌ Auto-install failed: ${message ?: "unknown error"}"
+            else ->
+                "No auto-install has run yet."
+        }
+
+        tvStatus.text = "🔧 Work Profile — Secure Folder++ Installer\n\n$autoInstallLine\n\n" +
+                "You can also pick an APK manually below."
     }
 
     private fun pickApkFile() {
@@ -318,6 +340,8 @@ class MainActivity : AppCompatActivity() {
         if (!isWorkProfile()) {
             val filter = IntentFilter(SecureMonitorService.ACTION_SECURITY_VIOLATION)
             registerReceiver(violationReceiver, filter, RECEIVER_NOT_EXPORTED)
+        } else {
+            refreshWorkProfileStatus()
         }
     }
 

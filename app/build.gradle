@@ -37,9 +37,13 @@ android {
             // Disable debug builds for security-sensitive apps.
             // Debug builds allow ADB attach and are not suitable for a secure container.
             debuggable false
-            minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
-                    'proguard-rules.pro'
+            // Minification off for debug: R8's optimizer was eliminating Timber.e()
+            // calls it has no assumenosideeffects rule for (confirmed by pulling the
+            // installed APK and grepping the dex — log strings were missing even
+            // for pre-existing, unrelated error logs). That makes on-device
+            // debugging unreliable. debuggable=false above is what actually matters
+            // for the "no ADB attach" security property; minifyEnabled does not.
+            minifyEnabled false
         }
         release {
             debuggable false

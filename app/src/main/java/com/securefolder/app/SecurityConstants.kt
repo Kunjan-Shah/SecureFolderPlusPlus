@@ -39,6 +39,33 @@ object SecurityConstants {
 //    const val BANKING_APP_CERT_SHA256 = "AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99" // ← REPLACE THIS
     const val BANKING_APP_CERT_SHA256 = "43:57:76:89:1F:2C:A2:14:E3:ED:16:7C:42:F6:0E:47:D9:6F:A4:9E:0C:9E:A7:6D:BD:99:36:FA:54:F1:5F:42" // ← REPLACE THIS
 
+    /**
+     * Filename of the banking app's APK bundled under app/src/main/assets/,
+     * silently installed into the work profile right after provisioning
+     * completes (see SecureFolderAdminReceiver.onEnabled()).
+     *
+     * You must place the real APK there yourself, pulled from your own
+     * legitimately-installed copy of the app (e.g. `adb shell pm path
+     * com.sbi.lotusintouch` then `adb pull`) — never fetched from a
+     * third-party APK site. Keep it in sync with BANKING_APP_CERT_SHA256
+     * above; a mismatch is treated as a certificate validation failure.
+     */
+    const val BANKING_APP_BUNDLED_APK_ASSET = "yono_sbi.apk"
+
+    /**
+     * Live status of the automatic bundled-APK install, written by
+     * SecureFolderAdminReceiver/InstallResultReceiver (running inside the
+     * work profile) and read back by MainActivity's work-profile UI, since
+     * the install itself is silent and otherwise gives no visible feedback.
+     */
+    const val PREF_BANKING_INSTALL_STATUS  = "banking_install_status"
+    const val PREF_BANKING_INSTALL_MESSAGE = "banking_install_message"
+
+    const val BANKING_INSTALL_STATUS_INSTALLING    = "installing"
+    const val BANKING_INSTALL_STATUS_SUCCESS       = "success"
+    const val BANKING_INSTALL_STATUS_CERT_MISMATCH = "cert_mismatch"
+    const val BANKING_INSTALL_STATUS_FAILED        = "failed"
+
     // ─────────────────────────────────────────────────────────────────────────
     //  Profile and storage keys
     // ─────────────────────────────────────────────────────────────────────────

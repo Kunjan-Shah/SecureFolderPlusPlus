@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.UserHandle
+// import com.securefolderplusplus.app.security.BankingAppInstaller // re-enable with the automated install block below
 import timber.log.Timber
 
 /**
@@ -71,16 +72,52 @@ class SecureFolderAdminReceiver : DeviceAdminReceiver() {
      */
     override fun onEnabled(context: Context, intent: Intent) {
         super.onEnabled(context, intent)
-        Timber.i("Device admin enabled.")
+        // Timber.e survives the -assumenosideeffects strip that removes .i/.d/.v
+        // in this build's ProGuard config — temporary checkpoints so the next
+        // provisioning attempt is actually observable in logcat instead of blind.
+        Timber.e("SFPP-DIAG: onEnabled() fired.")
 
         // If this is a fresh setup, apply policies.
         // (onProfileProvisioningComplete fires first in the primary profile,
         // so onEnabled here catches the work-profile context specifically.)
         val enforcer = PolicyEnforcer(context)
-        if (enforcer.isProfileOwner()) {
+        val isOwner = enforcer.isProfileOwner()
+        Timber.e("SFPP-DIAG: onEnabled() isProfileOwner=$isOwner")
+        if (isOwner) {
             // Re-assert policies in the work profile context (belt and suspenders)
             enforcer.applyAllInitialPolicies()
-            Timber.i("Work profile context: policies re-asserted.")
+            Timber.e("SFPP-DIAG: policies re-asserted, starting install kickoff.")
+
+            // AUTOMATED BUNDLED-APK INSTALL — TEMPORARILY DISABLED.
+            // Banking app is being installed manually via the work-profile
+            // "Pick Banking App APK to Install" button for now. Re-enable by
+            // uncommenting this block once the automated path is ready again.
+            //
+            // Streaming a large bundled APK into PackageInstaller can take well
+            // longer than a BroadcastReceiver's ~10s execution budget, and
+            // onReceive() runs on the main thread — doing this inline risks the
+            // system killing the receiver mid-copy with no exception logged at
+            // all. goAsync() + a background thread avoids both problems.
+            //
+            // NOTE: on at least one tested device (Android Go / JioPhoneNext),
+            // onEnabled() never fires at all in-profile during provisioning —
+            // confirmed via the SFPP-DIAG checkpoints above never appearing in
+            // logcat. BootReceiver's first-boot handling is the reliable
+            // fallback trigger for the same install (see BootReceiver.kt),
+            // and BankingAppInstaller.installBundledIfNeeded() guards against
+            // both firing at once.
+            /*
+            val pendingResult = goAsync()
+            Thread {
+                try {
+                    BankingAppInstaller(context).installBundledIfNeeded()
+                } catch (e: Throwable) {
+                    Timber.e(e, "Uncaught exception installing bundled banking app.")
+                } finally {
+                    pendingResult.finish()
+                }
+            }.start()
+            */
         }
     }
 
