@@ -4,9 +4,18 @@
     <option name="activeSessionId" value="384c3c24-b91d-40c5-9b38-57f1b7aaed12" />
     <option name="openSessionIds">
       <list>
-        <option value="17eb9d02-91bc-49ac-a983-6a8ff729bdf4" />
         <option value="384c3c24-b91d-40c5-9b38-57f1b7aaed12" />
       </list>
+    </option>
+    <option name="sessionPaths">
+      <map>
+        <entry key="384c3c24-b91d-40c5-9b38-57f1b7aaed12" value="/sessions/384c3c24-b91d-40c5-9b38-57f1b7aaed12" />
+      </map>
+    </option>
+    <option name="sessionTitles">
+      <map>
+        <entry key="384c3c24-b91d-40c5-9b38-57f1b7aaed12" value="localhost:49690/sessions/384c3c24-b91d-40c5-9b38-57f1b7aaed12?workingDir=C%3A%2FUsers%2Fudaym%2FAndroidStudioProjects%2FSecureFolderPlusPlus&amp;panelId=047f4c47-8b75-4d84-b67b-fc753c9c53e7&amp;theme=dark" />
+      </map>
     </option>
   </component>
 </project>

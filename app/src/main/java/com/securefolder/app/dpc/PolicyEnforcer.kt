@@ -78,7 +78,25 @@ class PolicyEnforcer(private val context: Context) {
         disableCamera()
         disableKeyguardFeatures()
         setNotificationPolicy()
+        enableProfile()
         Timber.i("PolicyEnforcer: all policies applied.")
+    }
+
+    /**
+     * Marks the managed profile as enabled. Until a profile owner calls this,
+     * Android keeps the profile in a DISABLED state: its apps get no launcher
+     * icon, and it's excluded from UserManager.getUserProfiles() /
+     * CrossProfileApps results — even though the profile owner and all DPM
+     * policies are already fully active. Must be called exactly once, right
+     * after provisioning completes.
+     */
+    private fun enableProfile() {
+        try {
+            dpm.setProfileEnabled(adminComponent)
+            Timber.i("Policy: work profile marked as enabled.")
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to enable work profile.")
+        }
     }
 
     /**

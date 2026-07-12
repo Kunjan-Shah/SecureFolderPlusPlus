@@ -103,9 +103,16 @@ class ProfileManager(private val context: Context) {
         if (!canSystemProvisionManagedProfile()) {
             return ProvisioningBlockReason.SYSTEM_UNSUPPORTED
         }
-        // A managed profile already exists — do not attempt to create another
+        // A managed profile already exists — do not attempt to create another.
+        // Distinguish "we created it" from "something else (e.g. Samsung Secure
+        // Folder, or another MDM) already occupies the device's one allowed slot" —
+        // only this app's own PREF_PROFILE_CREATED flag tells us which case it is.
         if (hasExistingManagedProfile()) {
-            return ProvisioningBlockReason.ALREADY_PROVISIONED
+            return if (wasProfileEverCreated()) {
+                ProvisioningBlockReason.ALREADY_PROVISIONED
+            } else {
+                ProvisioningBlockReason.EXISTING_PROFILE_FROM_ANOTHER_DPC
+            }
         }
         return null
     }

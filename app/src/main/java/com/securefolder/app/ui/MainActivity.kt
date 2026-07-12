@@ -2,11 +2,15 @@ package com.securefolderplusplus.app.ui
 
 import android.app.Activity
 import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.CrossProfileApps
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Process
 import android.os.UserManager
 import android.view.View
 import android.widget.Button
@@ -37,6 +41,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnHealthCheck:    Button
     private lateinit var btnLaunch:         Button
     private lateinit var btnInstallBanking: Button
+    private lateinit var btnOpenWorkProfile: Button
 
     private val violationReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -67,6 +72,7 @@ class MainActivity : AppCompatActivity() {
         btnHealthCheck    = findViewById(R.id.btnHealthCheck)
         btnLaunch         = findViewById(R.id.btnLaunch)
         btnInstallBanking = findViewById(R.id.btnInstallBanking)
+        btnOpenWorkProfile = findViewById(R.id.btnOpenWorkProfile)
 
         if (isWorkProfile()) {
             setupWorkProfileUI()
@@ -89,9 +95,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupWorkProfileUI() {
         // Hide personal-profile-only buttons
-        btnSetup.visibility       = View.GONE
-        btnHealthCheck.visibility = View.GONE
-        btnLaunch.visibility      = View.GONE
+        btnSetup.visibility          = View.GONE
+        btnHealthCheck.visibility    = View.GONE
+        btnLaunch.visibility         = View.GONE
+        btnOpenWorkProfile.visibility = View.GONE
 
         tvStatus.text = "🔧 Work Profile — Secure Folder++ Installer\n\n" +
                 "This is the work profile instance of the app.\n" +
@@ -120,20 +127,23 @@ class MainActivity : AppCompatActivity() {
         btnInstallBanking.visibility = View.GONE
         refreshPersonalUI()
 
-        btnSetup.setOnClickListener       { startProvisioning() }
-        btnHealthCheck.setOnClickListener { runHealthCheck() }
-        btnLaunch.setOnClickListener      { launchBankingApp() }
+        btnSetup.setOnClickListener          { startProvisioning() }
+        btnHealthCheck.setOnClickListener    { runHealthCheck() }
+        btnLaunch.setOnClickListener         { launchBankingApp() }
+        btnOpenWorkProfile.setOnClickListener { openWorkProfileInstance() }
     }
 
     private fun refreshPersonalUI() {
         if (profileManager.isProfileReady()) {
             tvStatus.text = "✅ Secure Folder++ is active.\n\n" +
                     "To install the banking app: open the Secure Folder++ " +
-                    "app with the 🏢 briefcase icon in your app drawer. " +
-                    "That is the work profile version — install from there."
-            btnSetup.visibility       = View.GONE
-            btnHealthCheck.visibility = View.VISIBLE
-            btnLaunch.visibility      = View.GONE
+                    "app with the 🏢 briefcase icon in your app drawer, or tap " +
+                    "\"Open Work Profile Setup\" below if you can't find that icon."
+            btnSetup.visibility          = View.GONE
+            btnHealthCheck.visibility    = View.VISIBLE
+            btnLaunch.visibility         = View.GONE
+            btnOpenWorkProfile.visibility =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) View.VISIBLE else View.GONE
         } else {
             val blocked = profileManager.checkProvisioningBlocked()
             if (blocked != null) {
@@ -142,10 +152,37 @@ class MainActivity : AppCompatActivity() {
                 btnSetup.visibility = View.GONE
             } else {
                 tvStatus.text = "Secure Folder++ is not set up yet."
-                btnSetup.visibility       = View.VISIBLE
-                btnHealthCheck.visibility = View.GONE
-                btnLaunch.visibility      = View.GONE
+                btnSetup.visibility          = View.VISIBLE
+                btnHealthCheck.visibility    = View.GONE
+                btnLaunch.visibility         = View.GONE
+                btnOpenWorkProfile.visibility = View.GONE
             }
+        }
+    }
+
+    // ── Cross-profile fallback: open this app's own work-profile instance ──────
+    //  Some OEM launchers (e.g. budget Android Go builds) don't surface a
+    //  "Work" tab/section in the app drawer, so the cloned work-profile icon
+    //  is never visible even though provisioning succeeded. CrossProfileApps
+    //  is the public, non-privileged API for "same app installed in both
+    //  profiles, launch my other instance" and doesn't depend on launcher UI.
+
+    private fun openWorkProfileInstance() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+            showError("Opening the work profile directly requires Android 9 or higher.")
+            return
+        }
+        try {
+            val userManager = getSystemService(UserManager::class.java)
+            val workHandle = userManager.userProfiles.firstOrNull { it != Process.myUserHandle() }
+            if (workHandle == null) {
+                showError("Could not find the work profile.")
+                return
+            }
+            val crossProfileApps = getSystemService(CrossProfileApps::class.java)
+            crossProfileApps.startMainActivity(ComponentName(this, MainActivity::class.java), workHandle)
+        } catch (e: Exception) {
+            showError("Could not open the work profile instance: ${e.message}")
         }
     }
 

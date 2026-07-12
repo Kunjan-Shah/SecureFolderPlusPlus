@@ -44,6 +44,15 @@
         android:visibility="gone"/>
 
     <Button
+        android:id="@+id/btnOpenWorkProfile"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Open Work Profile Setup"
+        android:textAllCaps="false"
+        android:layout_marginTop="12dp"
+        android:visibility="gone"/>
+
+    <Button
         android:id="@+id/btnInstallBanking"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
