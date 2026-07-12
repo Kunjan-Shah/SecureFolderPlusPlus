@@ -1,4 +1,4 @@
-package com.securefolder.app.security
+package com.securefolderplusplus.app.security
 
 import android.content.Context
 import android.content.Intent
@@ -7,9 +7,9 @@ import android.os.Build
 import android.os.Process
 import android.os.UserHandle
 import android.os.UserManager
-import com.securefolder.app.SecurityConstants
-import com.securefolder.app.model.HealthCheckReport
-import com.securefolder.app.profile.ProfileManager
+import com.securefolderplusplus.app.SecurityConstants
+import com.securefolderplusplus.app.model.HealthCheckReport
+import com.securefolderplusplus.app.profile.ProfileManager
 import timber.log.Timber
 
 class SecureLauncher(private val context: Context) {

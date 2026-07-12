@@ -1,4 +1,4 @@
-package com.securefolder.app.ui
+package com.securefolderplusplus.app.ui
 
 import android.app.Activity
 import android.content.BroadcastReceiver
@@ -12,13 +12,13 @@ import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.securefolder.app.R
-import com.securefolder.app.model.PolicyResult
-import com.securefolder.app.profile.ProfileManager
-import com.securefolder.app.security.BankingAppInstaller
-import com.securefolder.app.security.HealthCheckEngine
-import com.securefolder.app.security.SecureLauncher
-import com.securefolder.app.security.SecureMonitorService
+import com.securefolderplusplus.app.R
+import com.securefolderplusplus.app.model.PolicyResult
+import com.securefolderplusplus.app.profile.ProfileManager
+import com.securefolderplusplus.app.security.BankingAppInstaller
+import com.securefolderplusplus.app.security.HealthCheckEngine
+import com.securefolderplusplus.app.security.SecureLauncher
+import com.securefolderplusplus.app.security.SecureMonitorService
 
 class MainActivity : AppCompatActivity() {
 
@@ -174,7 +174,7 @@ class MainActivity : AppCompatActivity() {
         }.start()
     }
 
-    private fun displayReport(report: com.securefolder.app.model.HealthCheckReport) {
+    private fun displayReport(report: com.securefolderplusplus.app.model.HealthCheckReport) {
         val sb = StringBuilder()
         for (result in report.results) {
             val icon = when {

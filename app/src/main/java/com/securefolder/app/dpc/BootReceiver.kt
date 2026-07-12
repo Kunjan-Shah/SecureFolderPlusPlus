@@ -1,9 +1,9 @@
-package com.securefolder.app.dpc
+package com.securefolderplusplus.app.dpc
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.securefolder.app.profile.ProfileManager
+import com.securefolderplusplus.app.profile.ProfileManager
 import timber.log.Timber
 
 /**

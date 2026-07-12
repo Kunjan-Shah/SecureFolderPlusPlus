@@ -1,4 +1,4 @@
-package com.securefolder.app.model
+package com.securefolderplusplus.app.model
 
 /**
  * PolicyResult — the outcome of a single security check.

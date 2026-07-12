@@ -1,4 +1,4 @@
-package com.securefolder.app.security
+package com.securefolderplusplus.app.security
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -6,7 +6,7 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
-import com.securefolder.app.SecurityConstants
+import com.securefolderplusplus.app.SecurityConstants
 import kotlinx.coroutines.*
 import timber.log.Timber
 
@@ -89,7 +89,7 @@ class SecureMonitorService : Service() {
     }
 
     companion object {
-        const val ACTION_SECURITY_VIOLATION = "com.securefolder.app.SECURITY_VIOLATION"
+        const val ACTION_SECURITY_VIOLATION = "com.securefolderplusplus.app.SECURITY_VIOLATION"
         const val EXTRA_REASON = "reason"
     }
 }

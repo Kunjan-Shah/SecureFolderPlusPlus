@@ -1,4 +1,4 @@
-package com.securefolder.app.security
+package com.securefolderplusplus.app.security
 
 import android.content.Context
 import android.content.Intent

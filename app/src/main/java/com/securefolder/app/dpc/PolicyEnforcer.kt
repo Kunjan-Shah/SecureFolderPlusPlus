@@ -1,11 +1,11 @@
-package com.securefolder.app.dpc
+package com.securefolderplusplus.app.dpc
 
 import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
 import android.os.Build
 import android.os.UserManager
-import com.securefolder.app.SecurityConstants
+import com.securefolderplusplus.app.SecurityConstants
 import timber.log.Timber
 
 /**

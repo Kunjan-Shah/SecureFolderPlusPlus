@@ -1,4 +1,4 @@
-package com.securefolder.app.dpc
+package com.securefolderplusplus.app.dpc
 
 import android.app.admin.DeviceAdminReceiver
 import android.content.Context
@@ -123,7 +123,7 @@ class SecureFolderAdminReceiver : DeviceAdminReceiver() {
         val failedAttempts = enforcer.getFailedPasswordAttempts()
         Timber.w("Total failed attempts: $failedAttempts")
 
-        if (failedAttempts >= com.securefolder.app.SecurityConstants.MAX_FAILED_UNLOCK_ATTEMPTS) {
+        if (failedAttempts >= com.securefolderplusplus.app.SecurityConstants.MAX_FAILED_UNLOCK_ATTEMPTS) {
             Timber.e("Max failed attempts ($failedAttempts) reached. Wiping profile.")
             enforcer.wipeProfileData(reason = "Too many failed unlock attempts")
         }

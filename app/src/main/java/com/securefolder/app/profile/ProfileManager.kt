@@ -1,4 +1,4 @@
-package com.securefolder.app.profile
+package com.securefolderplusplus.app.profile
 
 import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
@@ -7,9 +7,9 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.UserManager
-import com.securefolder.app.SecurityConstants
-import com.securefolder.app.dpc.PolicyEnforcer
-import com.securefolder.app.dpc.SecureFolderAdminReceiver
+import com.securefolderplusplus.app.SecurityConstants
+import com.securefolderplusplus.app.dpc.PolicyEnforcer
+import com.securefolderplusplus.app.dpc.SecureFolderAdminReceiver
 import timber.log.Timber
 
 /**

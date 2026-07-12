@@ -1,4 +1,4 @@
-package com.securefolder.app.keyboard
+package com.securefolderplusplus.app.keyboard
 
 import android.inputmethodservice.InputMethodService
 import android.view.View

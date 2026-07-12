@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'com.securefolder.app'
+    namespace 'com.securefolderplusplus.app'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.securefolder.app"
+        applicationId "com.securefolderplusplus.app"
         // API 26 (Android 8.0): minimum for all DPM APIs we use.
         // Managed profiles, setPermittedAccessibilityServices, setPermittedInputMethods
         // all require API 21+, but FLAG_SECURE enforcement is cleanest from 26+.

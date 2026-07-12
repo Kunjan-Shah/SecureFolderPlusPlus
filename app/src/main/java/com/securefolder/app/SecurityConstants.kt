@@ -1,4 +1,4 @@
-package com.securefolder.app
+package com.securefolderplusplus.app
 
 /**
  * SecurityConstants — the single source of truth for all security-relevant
@@ -89,7 +89,7 @@ object SecurityConstants {
      */
     val TRUSTED_INPUT_METHODS: List<String> = listOf(
         // Our own isolated secure keyboard — highest priority
-        "com.securefolder.app/.keyboard.SecureKeyboardService",
+        "com.securefolderplusplus.app/.keyboard.SecureKeyboardService",
         // Google Keyboard (Gboard) — verified system keyboard
         "com.google.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME",
         // Samsung Keyboard (Samsung devices) — system keyboard

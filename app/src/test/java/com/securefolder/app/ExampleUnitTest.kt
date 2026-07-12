@@ -1,4 +1,4 @@
-package com.securefolder.app
+package com.securefolderplusplus.app
 
 import org.junit.Test
 

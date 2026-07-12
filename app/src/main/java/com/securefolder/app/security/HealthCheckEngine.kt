@@ -1,4 +1,4 @@
-package com.securefolder.app.security
+package com.securefolderplusplus.app.security
 
 import android.app.ActivityManager
 import android.content.Context
@@ -6,9 +6,9 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
-import com.securefolder.app.SecurityConstants
-import com.securefolder.app.model.HealthCheckReport
-import com.securefolder.app.model.PolicyResult
+import com.securefolderplusplus.app.SecurityConstants
+import com.securefolderplusplus.app.model.HealthCheckReport
+import com.securefolderplusplus.app.model.PolicyResult
 import timber.log.Timber
 import java.io.File
 import java.text.SimpleDateFormat
