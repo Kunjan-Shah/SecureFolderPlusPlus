@@ -53,6 +53,15 @@
         android:visibility="gone"/>
 
     <Button
+        android:id="@+id/btnConfirmInstall"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Confirm Install Now"
+        android:textAllCaps="false"
+        android:layout_marginTop="12dp"
+        android:visibility="gone"/>
+
+    <Button
         android:id="@+id/btnInstallBanking"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

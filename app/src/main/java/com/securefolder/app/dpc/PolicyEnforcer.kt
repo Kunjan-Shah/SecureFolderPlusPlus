@@ -300,14 +300,25 @@ class PolicyEnforcer(private val context: Context) {
      */
     private fun lockdownInstallation() {
         try {
-//            dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES)
-//            Timber.d("Policy: DISALLOW_INSTALL_UNKNOWN_SOURCES applied.")
-//
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-//                dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY)
-//                Timber.d("Policy: DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY applied.")
-//            }
-//
+            // Android applies DISALLOW_INSTALL_UNKNOWN_SOURCES to every managed
+            // profile BY DEFAULT — this code never set it, but it still blocked
+            // even our own Profile-Owner-driven PackageInstaller install
+            // (confirmed via Android's "Action not allowed" dialog when
+            // installing the banking app, either automatically or by manually
+            // picking the file). Clearing it so setup can actually complete.
+            //
+            // TODO: once the banking app installs reliably, re-add this
+            // restriction (dpm.addUserRestriction(...)) so nothing else can be
+            // sideloaded into the profile afterward — see CLAUDE.md's note
+            // that install lockdown is intentionally deferred, not finished.
+            dpm.clearUserRestriction(adminComponent, UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES)
+            Timber.d("Policy: DISALLOW_INSTALL_UNKNOWN_SOURCES cleared (temporary, for banking app setup).")
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                dpm.clearUserRestriction(adminComponent, UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY)
+                Timber.d("Policy: DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY cleared.")
+            }
+
 //            // Block any user-initiated installs (from Play Store or elsewhere)
 //            // within the work profile. The DPC controls what's installed.
 //            dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_INSTALL_APPS)

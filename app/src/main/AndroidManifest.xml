@@ -181,6 +181,19 @@
             </intent-filter>
         </receiver>
 
+        <!--
+        ── PackageInstaller result receiver ───────────────────────────────────
+           Target of the PendingIntent passed to PackageInstaller.Session.commit()
+           in BankingAppInstaller. Not declared anywhere before this — meaning
+           Android had no record of this component at all, so delivering the
+           install result broadcast (success/failure/pending-user-action) could
+           silently fail. Not exported: only ever invoked via a PendingIntent
+           this app creates for itself.
+        -->
+        <receiver
+            android:name=".security.InstallResultReceiver"
+            android:exported="false"/>
+
     </application>
 
 </manifest>

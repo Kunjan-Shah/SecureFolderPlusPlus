@@ -60,11 +60,54 @@ object SecurityConstants {
      */
     const val PREF_BANKING_INSTALL_STATUS  = "banking_install_status"
     const val PREF_BANKING_INSTALL_MESSAGE = "banking_install_message"
+    /**
+     * Serialized (Intent.toUri) confirmation Intent from PackageInstaller's
+     * STATUS_PENDING_USER_ACTION callback, saved so MainActivity can launch it
+     * directly from a foreground button tap — a genuine user-initiated
+     * startActivity() call, unlike one made from InstallResultReceiver's
+     * background BroadcastReceiver context, which Android's background-
+     * activity-launch restrictions can silently block.
+     */
+    const val PREF_BANKING_INSTALL_CONFIRM_INTENT_URI = "banking_install_confirm_intent_uri"
+    const val PREF_BANKING_INSTALL_BYTES_COPIED = "banking_install_bytes_copied"
+    const val PREF_BANKING_INSTALL_TOTAL_BYTES  = "banking_install_total_bytes"
 
     const val BANKING_INSTALL_STATUS_INSTALLING    = "installing"
+    const val BANKING_INSTALL_STATUS_NEEDS_CONFIRMATION = "needs_confirmation"
     const val BANKING_INSTALL_STATUS_SUCCESS       = "success"
     const val BANKING_INSTALL_STATUS_CERT_MISMATCH = "cert_mismatch"
     const val BANKING_INSTALL_STATUS_FAILED        = "failed"
+
+    /**
+     * Notification used to let the user manually confirm the banking app
+     * install when Android refuses the silent-install request (observed on
+     * at least one Samsung/One UI build: PackageInstaller reports "User
+     * action required" even with setRequireUserAction(NOT_REQUIRED) set).
+     * A plain startActivity() call from InstallResultReceiver's background
+     * BroadcastReceiver context can be silently blocked by Android's
+     * background-activity-launch restrictions; routing through a
+     * notification tap is a genuine user-initiated action and isn't subject
+     * to that restriction.
+     */
+    const val INSTALL_CONFIRM_CHANNEL_ID = "sfpp_install_confirm"
+    const val INSTALL_CONFIRM_NOTIFICATION_ID = 9002
+
+    /**
+     * Status of copying the bundled banking APK into the work profile's public
+     * Downloads folder (see BankingAppInstaller.copyBundledApkToDownloadsIfNeeded()),
+     * tracked separately from BANKING_INSTALL_STATUS_* — copying a file and
+     * actually installing it via PackageInstaller are two different operations
+     * with two different outcomes to report.
+     */
+    const val PREF_BANKING_COPY_STATUS       = "banking_copy_status"
+    const val PREF_BANKING_COPY_MESSAGE      = "banking_copy_message"
+    const val PREF_BANKING_COPY_PATH         = "banking_copy_path"
+    const val PREF_BANKING_COPY_BYTES_COPIED = "banking_copy_bytes_copied"
+    const val PREF_BANKING_COPY_TOTAL_BYTES  = "banking_copy_total_bytes"
+
+    const val BANKING_COPY_STATUS_COPYING = "copying"
+    const val BANKING_COPY_STATUS_SUCCESS = "success"
+    const val BANKING_COPY_STATUS_FAILED  = "failed"
 
     // ─────────────────────────────────────────────────────────────────────────
     //  Profile and storage keys

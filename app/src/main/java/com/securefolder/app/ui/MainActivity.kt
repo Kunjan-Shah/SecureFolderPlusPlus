@@ -1,5 +1,6 @@
 package com.securefolderplusplus.app.ui
 
+import android.Manifest
 import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.ComponentName
@@ -7,15 +8,20 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.CrossProfileApps
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.os.Process
 import android.os.UserManager
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.securefolderplusplus.app.R
 import com.securefolderplusplus.app.SecurityConstants
 import com.securefolderplusplus.app.model.PolicyResult
@@ -29,6 +35,7 @@ class MainActivity : AppCompatActivity() {
 
     private val REQUEST_CODE_PROVISION  = 1001
     private val REQUEST_CODE_PICK_APK   = 1002
+    private val REQUEST_CODE_NOTIFICATION_PERMISSION = 1004
 
     private lateinit var profileManager:    ProfileManager
     private lateinit var healthCheckEngine: HealthCheckEngine
@@ -43,6 +50,27 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnLaunch:         Button
     private lateinit var btnInstallBanking: Button
     private lateinit var btnOpenWorkProfile: Button
+    private lateinit var btnConfirmInstall: Button
+
+    private val statusRefreshHandler = Handler(Looper.getMainLooper())
+    private val statusRefreshRunnable = object : Runnable {
+        override fun run() {
+            refreshWorkProfileStatus()
+            val prefs = getSharedPreferences(SecurityConstants.PREF_NAME, Context.MODE_PRIVATE)
+            val copyStatus = prefs.getString(SecurityConstants.PREF_BANKING_COPY_STATUS, null)
+            val installStatus = prefs.getString(SecurityConstants.PREF_BANKING_INSTALL_STATUS, null)
+            // Keep polling only while the copy or an install is in flight or
+            // awaiting a confirmation tap — a terminal state (success/failed/
+            // cert_mismatch) or "never run" won't change again on its own, so
+            // there's nothing left to watch for.
+            if (copyStatus == SecurityConstants.BANKING_COPY_STATUS_COPYING ||
+                installStatus == SecurityConstants.BANKING_INSTALL_STATUS_INSTALLING ||
+                installStatus == SecurityConstants.BANKING_INSTALL_STATUS_NEEDS_CONFIRMATION
+            ) {
+                statusRefreshHandler.postDelayed(this, 1000)
+            }
+        }
+    }
 
     private val violationReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -74,6 +102,9 @@ class MainActivity : AppCompatActivity() {
         btnLaunch         = findViewById(R.id.btnLaunch)
         btnInstallBanking = findViewById(R.id.btnInstallBanking)
         btnOpenWorkProfile = findViewById(R.id.btnOpenWorkProfile)
+        btnConfirmInstall = findViewById(R.id.btnConfirmInstall)
+
+        ensureNotificationPermission()
 
         if (isWorkProfile()) {
             setupWorkProfileUI()
@@ -87,6 +118,29 @@ class MainActivity : AppCompatActivity() {
     private fun isWorkProfile(): Boolean {
         val um = getSystemService(UserManager::class.java)
         return um.isManagedProfile
+    }
+
+    // ── Notification permission ─────────────────────────────────────────────
+    //  Android 13+ requires an explicit runtime grant for POST_NOTIFICATIONS —
+    //  declaring it in the manifest alone does nothing. Without this grant,
+    //  InstallResultReceiver's "confirm the install" notification silently
+    //  never appears (no crash, no error — NotificationManager.notify() just
+    //  no-ops), which is why the install looked permanently stuck. This is
+    //  granted per-profile, so it must be requested here in both the personal
+    //  and work-profile instances of this Activity.
+
+    private fun ensureNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    REQUEST_CODE_NOTIFICATION_PERMISSION
+                )
+            }
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -104,31 +158,91 @@ class MainActivity : AppCompatActivity() {
         btnInstallBanking.visibility = View.VISIBLE
         btnInstallBanking.text = "Pick Banking App APK to Install"
         btnInstallBanking.setOnClickListener { pickApkFile() }
-
-        refreshWorkProfileStatus()
+        btnConfirmInstall.setOnClickListener { confirmPendingInstall() }
+        // Polling loop is started from onResume(), which always follows onCreate().
     }
 
-    /** Shows the live status of the silent auto-install triggered by onEnabled(). */
+    /**
+     * Launches the saved PackageInstaller confirmation Intent directly from
+     * this button tap — a genuine foreground, user-initiated startActivity()
+     * call, so it isn't subject to the background-activity-launch
+     * restrictions that can silently block the same call from
+     * InstallResultReceiver's BroadcastReceiver context.
+     */
+    private fun confirmPendingInstall() {
+        val prefs = getSharedPreferences(SecurityConstants.PREF_NAME, Context.MODE_PRIVATE)
+        val uriString = prefs.getString(SecurityConstants.PREF_BANKING_INSTALL_CONFIRM_INTENT_URI, null)
+        if (uriString == null) {
+            showError("No pending install confirmation found.")
+            return
+        }
+        try {
+            val confirmIntent = Intent.parseUri(uriString, Intent.URI_INTENT_SCHEME)
+            confirmIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(confirmIntent)
+        } catch (e: Exception) {
+            showError("Could not open the install confirmation: ${e.message}")
+        }
+    }
+
+    /**
+     * Shows the live status/progress of two separate operations:
+     *   1. Copying the bundled APK into Downloads (automatic, via onEnabled()/BootReceiver).
+     *   2. Actually installing it (manual, via "Pick Banking App APK to Install").
+     */
     private fun refreshWorkProfileStatus() {
         val prefs = getSharedPreferences(SecurityConstants.PREF_NAME, Context.MODE_PRIVATE)
-        val status = prefs.getString(SecurityConstants.PREF_BANKING_INSTALL_STATUS, null)
-        val message = prefs.getString(SecurityConstants.PREF_BANKING_INSTALL_MESSAGE, null)
 
-        val autoInstallLine = when (status) {
-            SecurityConstants.BANKING_INSTALL_STATUS_INSTALLING ->
-                "⏳ Auto-installing banking app in the background — large APKs can take a few minutes."
-            SecurityConstants.BANKING_INSTALL_STATUS_SUCCESS ->
-                "✅ Banking app auto-installed and certificate verified."
-            SecurityConstants.BANKING_INSTALL_STATUS_CERT_MISMATCH ->
-                "⚠️ Banking app installed but FAILED certificate verification — do not use it."
-            SecurityConstants.BANKING_INSTALL_STATUS_FAILED ->
-                "❌ Auto-install failed: ${message ?: "unknown error"}"
+        val copyStatus  = prefs.getString(SecurityConstants.PREF_BANKING_COPY_STATUS, null)
+        val copyMessage = prefs.getString(SecurityConstants.PREF_BANKING_COPY_MESSAGE, null)
+        val copyPath    = prefs.getString(SecurityConstants.PREF_BANKING_COPY_PATH, null)
+        val copyCopied  = prefs.getLong(SecurityConstants.PREF_BANKING_COPY_BYTES_COPIED, 0L)
+        val copyTotal   = prefs.getLong(SecurityConstants.PREF_BANKING_COPY_TOTAL_BYTES, 0L)
+
+        val copyLine = when (copyStatus) {
+            SecurityConstants.BANKING_COPY_STATUS_COPYING -> {
+                val copiedMb = copyCopied / (1024 * 1024)
+                if (copyTotal > 0) {
+                    val totalMb = copyTotal / (1024 * 1024)
+                    val pct = (copyCopied * 100 / copyTotal)
+                    "⏳ Copying banking app APK to Downloads: $copiedMb MB / $totalMb MB ($pct%)"
+                } else {
+                    "⏳ Copying banking app APK to Downloads: $copiedMb MB copied so far..."
+                }
+            }
+            SecurityConstants.BANKING_COPY_STATUS_SUCCESS ->
+                "✅ APK copied to: $copyPath\n\n" +
+                        "Tap \"Pick Banking App APK to Install\" below, browse to Downloads, " +
+                        "and select it to install."
+            SecurityConstants.BANKING_COPY_STATUS_FAILED ->
+                "❌ Copy to Downloads failed: ${copyMessage ?: "unknown error"}"
             else ->
-                "No auto-install has run yet."
+                "Waiting for the APK to be copied to Downloads..."
         }
 
-        tvStatus.text = "🔧 Work Profile — Secure Folder++ Installer\n\n$autoInstallLine\n\n" +
-                "You can also pick an APK manually below."
+        val installStatus  = prefs.getString(SecurityConstants.PREF_BANKING_INSTALL_STATUS, null)
+        val installMessage = prefs.getString(SecurityConstants.PREF_BANKING_INSTALL_MESSAGE, null)
+
+        val installLine = when (installStatus) {
+            SecurityConstants.BANKING_INSTALL_STATUS_INSTALLING ->
+                "\n\n⏳ Installing the picked APK..."
+            SecurityConstants.BANKING_INSTALL_STATUS_NEEDS_CONFIRMATION ->
+                "\n\n⚠️ Android needs you to confirm this install — check your notifications " +
+                        "for \"Confirm banking app install\", or tap \"Confirm Install Now\" below." +
+                        (installMessage?.let { "\n\nDebug: $it" } ?: "")
+            SecurityConstants.BANKING_INSTALL_STATUS_SUCCESS ->
+                "\n\n✅ Banking app installed and certificate verified."
+            SecurityConstants.BANKING_INSTALL_STATUS_CERT_MISMATCH ->
+                "\n\n⚠️ Banking app installed but FAILED certificate verification — do not use it."
+            SecurityConstants.BANKING_INSTALL_STATUS_FAILED ->
+                "\n\n❌ Install failed: ${installMessage ?: "unknown error"}"
+            else -> ""
+        }
+
+        btnConfirmInstall.visibility =
+            if (installStatus == SecurityConstants.BANKING_INSTALL_STATUS_NEEDS_CONFIRMATION) View.VISIBLE else View.GONE
+
+        tvStatus.text = "🔧 Work Profile — Secure Folder++ Installer\n\n$copyLine$installLine"
     }
 
     private fun pickApkFile() {
@@ -147,6 +261,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupPersonalProfileUI() {
         btnInstallBanking.visibility = View.GONE
+        btnConfirmInstall.visibility = View.GONE
         refreshPersonalUI()
 
         btnSetup.setOnClickListener          { startProvisioning() }
@@ -341,7 +456,7 @@ class MainActivity : AppCompatActivity() {
             val filter = IntentFilter(SecureMonitorService.ACTION_SECURITY_VIOLATION)
             registerReceiver(violationReceiver, filter, RECEIVER_NOT_EXPORTED)
         } else {
-            refreshWorkProfileStatus()
+            statusRefreshHandler.post(statusRefreshRunnable)
         }
     }
 
@@ -349,6 +464,8 @@ class MainActivity : AppCompatActivity() {
         super.onPause()
         if (!isWorkProfile()) {
             unregisterReceiver(violationReceiver)
+        } else {
+            statusRefreshHandler.removeCallbacks(statusRefreshRunnable)
         }
     }
 

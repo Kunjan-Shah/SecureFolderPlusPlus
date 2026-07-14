@@ -3,9 +3,9 @@ package com.securefolderplusplus.app.dpc
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-// import android.os.UserManager // re-enable with the automated install block below
+import android.os.UserManager
 import com.securefolderplusplus.app.profile.ProfileManager
-// import com.securefolderplusplus.app.security.BankingAppInstaller // re-enable with the automated install block below
+import com.securefolderplusplus.app.security.BankingAppInstaller
 import timber.log.Timber
 
 /**
@@ -34,39 +34,32 @@ class BootReceiver : BroadcastReceiver() {
                 Timber.i("Boot completed. Restoring Secure Folder++ state.")
                 onBoot(context)
 
-                // AUTOMATED BUNDLED-APK INSTALL FALLBACK — TEMPORARILY DISABLED.
-                // Banking app is being installed manually via the work-profile
-                // "Pick Banking App APK to Install" button for now. Re-enable by
-                // uncommenting this block once the automated path is ready again.
-                //
                 // SecureFolderAdminReceiver.onEnabled() is supposed to be the
-                // trigger for the one-time bundled banking app install, but on
-                // at least one tested device it never fires in-profile at all
-                // during provisioning. This boot broadcast reliably fires
-                // per-profile (including the very first boot right after a
-                // fresh profile is created), so it's the safety-net trigger.
-                // installBundledIfNeeded() guards against double-installing
-                // if onEnabled() also fired correctly.
-                /*
+                // trigger for the one-time bundled-APK copy, but on at least
+                // one tested device it never fires in-profile at all during
+                // provisioning. This boot broadcast reliably fires per-profile
+                // (including the very first boot right after a fresh profile
+                // is created), so it's the safety-net trigger.
+                // copyBundledApkToDownloadsIfNeeded() guards against copying
+                // twice if onEnabled() also fired correctly.
                 val isManagedProfile =
                     context.getSystemService(UserManager::class.java)?.isManagedProfile == true
                 val isOwner = PolicyEnforcer(context).isProfileOwner()
                 Timber.e("SFPP-DIAG: BootReceiver isManagedProfile=$isManagedProfile isProfileOwner=$isOwner")
                 if (isManagedProfile && isOwner) {
                     val pendingResult = goAsync()
-                    Timber.e("SFPP-DIAG: BootReceiver launching install thread.")
+                    Timber.e("SFPP-DIAG: BootReceiver launching copy thread.")
                     Thread {
                         try {
-                            BankingAppInstaller(context).installBundledIfNeeded()
+                            BankingAppInstaller(context).copyBundledApkToDownloadsIfNeeded()
                         } catch (e: Throwable) {
-                            Timber.e(e, "Uncaught exception installing bundled banking app on boot.")
+                            Timber.e(e, "Uncaught exception copying bundled banking app on boot.")
                         } finally {
-                            Timber.e("SFPP-DIAG: BootReceiver install thread finishing, releasing wakelock.")
+                            Timber.e("SFPP-DIAG: BootReceiver copy thread finishing, releasing wakelock.")
                             pendingResult.finish()
                         }
                     }.start()
                 }
-                */
             }
         }
     }

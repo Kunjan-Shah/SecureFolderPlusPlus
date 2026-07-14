@@ -68,6 +68,13 @@ android {
         buildConfig true
     }
 
+    // Store the bundled banking APK uncompressed so its exact size is
+    // readable via AssetManager.openFd() (needed for install progress
+    // reporting) and so PackageInstaller reads don't pay decompression cost.
+    androidResources {
+        noCompress += ["apk"]
+    }
+
     // Prevent inclusion of debug metadata that could leak internals
     packaging {
         resources {
