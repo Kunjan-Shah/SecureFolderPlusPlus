@@ -1,20 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ClaudeCodeEditorTabs">
-    <option name="activeSessionId" value="384c3c24-b91d-40c5-9b38-57f1b7aaed12" />
+    <option name="activeSessionId" value="f1bbc724-348d-49ee-bd50-5a2ae2fc1602" />
     <option name="openSessionIds">
       <list>
         <option value="384c3c24-b91d-40c5-9b38-57f1b7aaed12" />
+        <option value="f1bbc724-348d-49ee-bd50-5a2ae2fc1602" />
       </list>
     </option>
     <option name="sessionPaths">
       <map>
         <entry key="384c3c24-b91d-40c5-9b38-57f1b7aaed12" value="/sessions/384c3c24-b91d-40c5-9b38-57f1b7aaed12" />
+        <entry key="f1bbc724-348d-49ee-bd50-5a2ae2fc1602" value="/sessions/758b836c-b6c8-4803-a96e-2ec403a2fd2e" />
       </map>
     </option>
     <option name="sessionTitles">
       <map>
         <entry key="384c3c24-b91d-40c5-9b38-57f1b7aaed12" value="localhost:49690/sessions/384c3c24-b91d-40c5-9b38-57f1b7aaed12?workingDir=C%3A%2FUsers%2Fudaym%2FAndroidStudioProjects%2FSecureFolderPlusPlus&amp;panelId=047f4c47-8b75-4d84-b67b-fc753c9c53e7&amp;theme=dark" />
+        <entry key="f1bbc724-348d-49ee-bd50-5a2ae2fc1602" value="CLAUDE.md explains the whole project structure. Th" />
       </map>
     </option>
   </component>
